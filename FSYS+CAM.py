@@ -1,12 +1,12 @@
 #!/usr/bin/python
-#FLIGHTSYSTEM
+#FLIGHTSYSTEM + CAM
 #This system is comprised of 5 parts: GPSLOG, GPS, ROCK, CAM and EXEC.
 #GPSLOG records extensive GPS data on a text file, which serves as a GPS log.
 #GPS writes GPS data on a temporary text file
 #ROCK reads the temporary text file and sends it to the Iridium net.
 #CAM takes a high resolution photo.
 #EXEC executes CAM and GPSLOG every 30 minutes and GPS and ROCK every hour.
-
+#ROCK refers to a Python library by MakerSnake: https://github.com/MakerSnake/pyRockBlock - All credits to MakerSnake!
 
 import os
 from gps import *
