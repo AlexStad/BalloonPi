@@ -1,11 +1,11 @@
 #!/usr/bin/python
 #FLIGHTSYSTEM
-#This system is comprised of 4 parts: GPSLOG, GPS, ROCK and EXEC.
+#This system is comprised of 5 parts: GPSLOG, GPS, ROCK, CAM and EXEC.
 #GPSLOG records extensive GPS data on a text file, which serves as a GPS log.
 #GPS writes GPS data on a temporary text file
 #ROCK reads the temporary text file and sends it to the Iridium net.
+#CAM takes a high resolution photo.
 #EXEC executes CAM and GPSLOG every 30 minutes and GPS and ROCK every hour.
-#ROCK utilises a Python Library made by MakerSnake (https://github.com/MakerSnake/pyRockBlock) - All Credits to MakerSnake!
 
 
 import os
@@ -25,6 +25,10 @@ class GpsPoller(threading.Thread):
         self.current_value = None
         self.running = True             #setting thread running to true
 
+    def run(self):
+        global gpsd
+        while gpsp.running:
+            gpsd.next()                 #will loop, grab each info, clears buffer
 
 
 #GPSLOG Part
@@ -36,9 +40,7 @@ def GPSLOG():
     while gpsd.fix.mode < 2:            #ensures 3D fix
         time.sleep(3)
         counter+=1
-        if counter > 5:
-            gpsp.running = False
-            gpsp.join()
+        if counter > 20:
             break
     t = open('GPSDataLog','a')
     t.write("\nlat, long     " + str(gpsd.fix.latitude) + ", " + str(gpsd.fix.longitude))
@@ -63,13 +65,11 @@ def GPS():
     global gpsp
     gpsp = GpsPoller()                  #create thread
     gpsp.start()                        #start up
-    counter = 0
+    counter=0
     while gpsd.fix.mode < 2:            #ensures 3D fix
         time.sleep(3)
         counter+=1
-        if counter > 10:
-            gpsp.running = False
-            gpsp.join()
+        if counter > 20:
             break
     t = open('GPSDataMessage','w')
     t.write("\n" + str(gpsd.fix.latitude) + ", " + str(gpsd.fix.longitude))
@@ -88,36 +88,67 @@ from rockBlock import rockBlockProtocol
 
 class ROCK (rockBlockProtocol):
 
+    def main(self):                     #RockBlock Execution
+        self.sendMsg()
+
     def sendMsg(self):                  #Sends Message
         rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
         t = open('GPSDataMessage','r')  #Sets content
         message = t.read()
-        t.close()
         rb.sendMessage(message)
+        t.close()
         rb.close()
 
+    def rockBlockTxStarted(self):       #Started Transmission   
+        pass   
     def rockBlockTxFailed(self):        #Transmission Failed
-        rb.close()
         self.sendMsg()
-
-    def rockBlockTxSuccess(self):
-        rb.close()
         
+    def rockBlockTxSuccess(self,momsn): #Transmission Success
+        pass
+
+#CAM Part
+import picamera
+
+def CAM():
+    with picamera.PiCamera() as camera:
+            global gpsp
+            gpsp = GpsPoller()                  #create thread
+            gpsp.start()                        #start up
+            counter=0
+            while gpsd.fix.mode < 2:            #ensures 3D fix
+                time.sleep(3)
+                counter+=1
+                if counter > 20:
+                    break
+            camera.resolution = (3280, 2464)    
+            time.sleep(2) 
+            camera.capture(str(gpsd.utc) + ".jpg")
+            gpsp.running = False
+            gpsp.join()                         #wait for thread to finish
 
 #EXEC Part
 while True:
     try:
         GPS()
-        ROCK().sendMsg()
+        #ROCK().main()
     except:
         pass
     try:
         GPSLOG()
     except:
         pass
+    try:
+        CAM()
+    except:
+        pass
 
     time.sleep(1800)
 
+    try:
+        CAM()
+    except:
+        pass
     try:
         GPSLOG()
     except:
