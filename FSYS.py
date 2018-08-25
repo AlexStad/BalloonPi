@@ -5,6 +5,7 @@
 #GPS writes GPS data on a temporary text file
 #ROCK reads the temporary text file and sends it to the Iridium net.
 #EXEC executes CAM and GPSLOG every 30 minutes and GPS and ROCK every hour.
+#ROCK utilises a Python Library made by MakerSnake (https://github.com/MakerSnake/pyRockBlock) - All Credits to MakerSnake!
 
 
 import os
