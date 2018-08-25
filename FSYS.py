@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#FLIGHTSYSTEM2
+#FLIGHTSYSTEM
 #This system is comprised of 4 parts: GPSLOG, GPS, ROCK and EXEC.
 #GPSLOG records extensive GPS data on a text file, which serves as a GPS log.
 #GPS writes GPS data on a temporary text file
